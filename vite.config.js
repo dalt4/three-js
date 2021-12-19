@@ -6,7 +6,7 @@ export default ({
             input: {
                 main: './index.html',
                 dynamicEnv: './dynamic-env/index.html',
-                modernShader: './dynamic-env/index.html'
+                modernShader: './modern-shader/index.html'
             }
         }
     }
