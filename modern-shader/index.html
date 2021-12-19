@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>modern shader</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="../styles.scss">
+</head>
+<body>
+<a class="back-link" href="/"><sub>&#8592; back</sub></a>
+<script type="module">
+
+  import '../styles.scss'
+
+  import * as THREE from 'three/build/three.module.js';
+  import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
+  import fragment from '../public/shaders/modern-shader/fragment.glsl?raw'
+  import vertex from '../public/shaders/modern-shader/vertex.glsl?raw'
+
+  console.log(fragment);
+
+  import sky from '../public/img/ray1.png'
+
+  let camera, scene, renderer;
+  let cube, sphere, torus, torus4, material;
+
+  let texture1;
+  let time = 0;
+
+  const textureLoader = new THREE.TextureLoader();
+
+
+    init( );
+    animate();
+
+  const gltfLoader = new GLTFLoader();
+
+
+
+
+  function init( texture ) {
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor(0xffffff)
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    // renderer.getExtension('OES_standard_derivatives');
+    document.body.appendChild( renderer.domElement );
+
+    scene = new THREE.Scene();
+    scene.background = texture;
+
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 100 );
+
+    camera.position.z = .7
+
+    let controls = new OrbitControls(camera, renderer.domElement)
+
+    scene.add(new THREE.AmbientLight(0xffffff, .5))
+
+    material = new THREE.ShaderMaterial( {
+      extensions: {
+        derivatives: '#extension GL_OES_standard_derivatives : enabled'
+      },
+      uniforms: {
+        time: { type: 'f', value: 0 },
+        sky: { type: 't', value: new THREE.TextureLoader().load(sky) },
+        resolution: { type: 'v4', value: new THREE.Vector4() },
+        uvRate1: { value: new THREE.Vector2(1, 1) }
+      },
+      side: THREE.DoubleSide,
+      vertexShader: vertex,
+      fragmentShader: fragment
+    } );
+
+    sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 15, 32, 32 ), material );
+    // scene.add( sphere );
+
+    window.addEventListener( 'resize', onWindowResized );
+
+  }
+
+gltfLoader.load('../public/models/hands.glb', gltf => {
+  let root = gltf.scene
+  root.traverse((node) => {
+    if (node.isMesh && node.material) {
+      node.material = material
+      node.material.needsUpdate
+    }
+  })
+
+  scene.add(root)
+})
+
+  function onWindowResized() {
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+  }
+
+  function animate() {
+
+    time += .05
+
+    material.uniforms.time.value = time
+
+    requestAnimationFrame( animate );
+    render();
+
+  }
+
+  function render() {
+
+
+    renderer.render( scene, camera );
+
+  }
+
+</script>
+
+</body>
+</html>
