@@ -13,41 +13,28 @@
   import '../styles.scss'
 
   import * as THREE from 'three/build/three.module.js';
-  import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
   import fragment from '../public/shaders/modern-shader/fragment.glsl?raw'
   import vertex from '../public/shaders/modern-shader/vertex.glsl?raw'
 
-  console.log(fragment);
+  import sky from '../public/img/modern.png'
 
-  import sky from '../public/img/ray1.png'
-
-  let camera, scene, renderer;
-  let cube, sphere, torus, torus4, material;
-
-  let texture1;
+  let camera, scene, renderer, controls;
+  let  sphere, material;
   let time = 0;
 
   const textureLoader = new THREE.TextureLoader();
 
-
     init( );
     animate();
-
-  const gltfLoader = new GLTFLoader();
-
-
-
 
   function init( texture ) {
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.setClearColor(0xffffff)
+    renderer.setClearColor(0x000000)
     renderer.outputEncoding = THREE.sRGBEncoding;
-    // renderer.getExtension('OES_standard_derivatives');
     document.body.appendChild( renderer.domElement );
 
     scene = new THREE.Scene();
@@ -56,10 +43,6 @@
     camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 100 );
 
     camera.position.z = .7
-
-    let controls = new OrbitControls(camera, renderer.domElement)
-
-    scene.add(new THREE.AmbientLight(0xffffff, .5))
 
     material = new THREE.ShaderMaterial( {
       extensions: {
@@ -71,29 +54,16 @@
         resolution: { type: 'v4', value: new THREE.Vector4() },
         uvRate1: { value: new THREE.Vector2(1, 1) }
       },
-      side: THREE.DoubleSide,
       vertexShader: vertex,
-      fragmentShader: fragment
+      fragmentShader: fragment,
     } );
 
-    sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 15, 32, 32 ), material );
-    // scene.add( sphere );
+    sphere = new THREE.Mesh( new THREE.IcosahedronBufferGeometry( .3, 32 ), material );
+    scene.add( sphere );
 
     window.addEventListener( 'resize', onWindowResized );
 
   }
-
-gltfLoader.load('../public/models/hands.glb', gltf => {
-  let root = gltf.scene
-  root.traverse((node) => {
-    if (node.isMesh && node.material) {
-      node.material = material
-      node.material.needsUpdate
-    }
-  })
-
-  scene.add(root)
-})
 
   function onWindowResized() {
 
