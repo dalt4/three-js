@@ -31,6 +31,8 @@ body {
 }
 
 a {
+  position: relative;
+  z-index: 1;
   display: block;
   &:hover {
     opacity: .9;
