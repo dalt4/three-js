@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Three-js | Crystal</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+<a class="back-link" href="/"><sub>&#8592; back</sub></a>
+<script type="module">
+
+  import '../styles.scss'
+
+  import * as THREE from 'three/build/three.module.js'
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+
+  let camera, scene, renderer, controls
+  let sphere, material
+
+  const textureLoader = new THREE.TextureLoader()
+
+  textureLoader.load('../img/backEnv3.jpg', function (texture) {
+    texture.encoding = THREE.sRGBEncoding
+    texture.mapping = THREE.EquirectangularReflectionMapping
+    textureLoader.load('../img/tatatatata8.jpg', function (texture1) {
+      texture1.encoding = THREE.sRGBEncoding
+      texture1.mapping = THREE.EquirectangularReflectionMapping
+      init(texture, texture1)
+      animate()
+    })
+  })
+
+  function init (texture, texture1) {
+    renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0x000000)
+    renderer.outputEncoding = THREE.sRGBEncoding
+    document.body.appendChild(renderer.domElement)
+
+    scene = new THREE.Scene()
+    scene.background = texture
+    scene.environment = texture1
+
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100)
+
+    camera.position.z = 1
+
+    controls = new OrbitControls(camera, renderer.domElement)
+    controls.autoRotate = true
+    controls.autoRotateSpeed = -2
+    controls.maxDistance = 1
+    controls.minDistance = 1
+    controls.enablePan = false
+    controls.enableDamping = true
+
+    material = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 1,
+      roughness: 0,
+      metalness: 0.1,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
+      transmission: 1.5,
+      thickness: 0.15,
+      ior: 2.42,
+      name: 'windows.1',
+      envMapIntensity: 1,
+      blending: THREE.NoBlending,
+      flatShading: true,
+      side: THREE.DoubleSide
+    })
+
+    sphere = new THREE.Mesh(new THREE.IcosahedronBufferGeometry(0.3, 2), material)
+    scene.add(sphere)
+
+    window.addEventListener('resize', onWindowResized)
+  }
+
+  function onWindowResized () {
+    renderer.setSize(window.innerWidth, window.innerHeight)
+
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+  }
+
+  function animate () {
+    controls.update()
+
+    requestAnimationFrame(animate)
+    render()
+  }
+
+  function render () {
+    renderer.render(scene, camera)
+  }
+
+</script>
+</body>
+</html>

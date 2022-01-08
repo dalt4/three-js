@@ -5,3 +5,5 @@ dist-ssr
 *.local
 .idea
 /public/shaders/WebGLBlobs-main/
+/public/img/monbachtal_riverbank_8k.hdr
+/public/img/sepulchral_chapel_rotunda_8k.hdr
