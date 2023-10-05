@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Three-js | multi-colored outlines</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+<a class="back-link" href="/"><sub>&#8592; back</sub></a>
+<script type="module">
+
+  import '../styles.scss'
+
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+  import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader";
+  import {
+    BufferGeometryLoader,
+    Clock,
+    HalfFloatType,
+    Mesh,
+    MeshPhysicalMaterial,
+    PerspectiveCamera,
+    PointLight,
+    Scene,
+    SphereGeometry,
+    sRGBEncoding,
+    WebGLRenderer
+  } from "three";
+  import {
+    BlendFunction,
+    EffectComposer,
+    EffectPass,
+    KernelSize,
+    OutlineEffect, RenderPass,
+  } from "postprocessing";
+
+  const loader = new BufferGeometryLoader();
+  const rgbeLoader = new RGBELoader()
+
+  let camera, scene, renderer, controls, environment, composer
+  const clock = new Clock();
+
+
+  init()
+  animate()
+  function init () {
+    renderer = new WebGLRenderer({ antialias: true })
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0x000000)
+    renderer.outputEncoding = sRGBEncoding
+    document.body.appendChild(renderer.domElement)
+
+    scene = new Scene()
+
+    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100)
+
+    camera.position.z = 1
+
+    controls = new OrbitControls(camera, renderer.domElement)
+    // controls.autoRotate = true
+    controls.autoRotateSpeed = -2
+    controls.maxDistance = 1
+    controls.minDistance = 1
+    controls.enablePan = false
+    controls.enableDamping = true
+
+
+
+
+    //++++++++++++++++++++++++postprocessing
+    composer = new EffectComposer(
+            renderer, {
+              frameBufferType: HalfFloatType
+            }
+    );
+
+
+    const outlineRed = new OutlineEffect(
+      scene,
+      camera,
+      {
+        pulseSpeed: .4,
+        visibleEdgeColor: 0xff0000,
+        hiddenEdgeColor: 0xb0e0e6,
+        edgeStrength: 1,
+        kernelSize: KernelSize.VERY_SMALL,
+        xRay: false,
+        resolutionScale: 1,
+        blur: true,
+        blendFunction: BlendFunction.SCREEN,
+      }
+    );
+    outlineRed.blurPass.kernelSize = KernelSize.MEDIUM
+    outlineRed.uniforms.get("edgeStrength").value = 10;
+    outlineRed.selection.layer = 10
+
+    const outlineGreen = new OutlineEffect(
+      scene,
+      camera,
+      {
+        pulseSpeed: .4,
+        visibleEdgeColor: 0x00ff00,
+        hiddenEdgeColor: 0xb0e0e6,
+        edgeStrength: 1,
+        kernelSize: KernelSize.VERY_SMALL,
+        xRay: false,
+        resolutionScale: 1,
+        blur: true,
+        blendFunction: BlendFunction.SCREEN,
+      }
+    );
+    outlineGreen.blurPass.kernelSize = KernelSize.MEDIUM
+    outlineGreen.uniforms.get("edgeStrength").value = 10;
+    outlineGreen.selection.layer = 11
+
+    const outlineBlue = new OutlineEffect(
+      scene,
+      camera,
+      {
+        pulseSpeed: .4,
+        visibleEdgeColor: 0x0000ff,
+        hiddenEdgeColor: 0xb0e0e6,
+        edgeStrength: 1,
+        kernelSize: KernelSize.VERY_SMALL,
+        xRay: false,
+        resolutionScale: 1,
+        blur: true,
+        blendFunction: BlendFunction.SCREEN,
+      }
+    );
+    outlineBlue.blurPass.kernelSize = KernelSize.MEDIUM
+    outlineBlue.uniforms.get("edgeStrength").value = 10;
+    outlineBlue.selection.layer = 12
+
+    const geometry = new SphereGeometry(.2, 64, 32)
+
+    for (let i = 0; i < 3; i++) {
+      const material = new MeshPhysicalMaterial({
+        color: 0x000,
+
+      })
+      const sphere = new Mesh(geometry, material)
+      sphere.material.color.set(0x000)
+      scene.add(sphere)
+      sphere.position.x = -.5 + (i * .5)
+      if(i === 0)outlineRed.selection.add(sphere)
+      if(i === 1)outlineGreen.selection.add(sphere)
+      if(i === 2)outlineBlue.selection.add(sphere)
+    }
+
+    const light = new PointLight(0xffffff, .5)
+    light.position.y = 10
+    light.position.z = 10
+    scene.add(light)
+
+    const renderPass = new RenderPass(scene, camera);
+    const effectPass = new EffectPass(
+            camera,
+            outlineRed,
+            outlineGreen,
+            outlineBlue
+    );
+
+
+    effectPass.renderToScreen = true;
+
+    composer.addPass(renderPass);
+    composer.addPass(effectPass);
+
+
+
+    window.addEventListener('resize', onWindowResized)
+  }
+
+  function onWindowResized () {
+    renderer.setSize(window.innerWidth, window.innerHeight)
+
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+  }
+
+  function animate () {
+    controls.update()
+
+    requestAnimationFrame(animate)
+    render()
+  }
+
+  function render () {
+    // renderer.render(scene, camera)
+    composer.render(clock.getDelta());
+  }
+
+</script>
+</body>
+</html>

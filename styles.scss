@@ -34,8 +34,12 @@ a {
   position: relative;
   z-index: 1;
   display: block;
+  opacity: .7;
+  transition: .2s ease-out;
   &:hover {
-    opacity: .9;
+    opacity: 1;
+    scale: 1.05;
+    translate: 0 -6px;
   }
 
   &.back-link {

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Three-js | Crystal</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+<a class="back-link" href="/"><sub>&#8592; back</sub></a>
+<script type="module">
+
+  import '../styles.scss'
+
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+  import {SetDiamondMaterial} from "./setDiamondMaterial";
+  import {geometryJson} from "./geometry";
+  import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader";
+  import {
+    BufferGeometryLoader,
+    Clock,
+    EquirectangularReflectionMapping,
+    HalfFloatType,
+    Mesh,
+    PerspectiveCamera,
+    PMREMGenerator,
+    Scene,
+    sRGBEncoding,
+    TextureLoader, WebGLRenderer
+  } from "three";
+  import {
+    EffectComposer,
+    EffectPass,
+    RenderPass,
+    BloomEffect
+  } from "postprocessing";
+
+  const loader = new BufferGeometryLoader();
+  const rgbeLoader = new RGBELoader()
+
+  let camera, scene, renderer, controls, environment, composer
+  const clock = new Clock();
+
+  const textureLoader = new TextureLoader()
+
+  textureLoader.load('../img/brown_photostudio_06-min.png', function (texture) {
+    texture.encoding = sRGBEncoding
+    texture.mapping = EquirectangularReflectionMapping
+
+    init(texture)
+
+  })
+
+  function init (texture) {
+    renderer = new WebGLRenderer({ antialias: true })
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0x000000)
+    renderer.outputEncoding = sRGBEncoding
+    document.body.appendChild(renderer.domElement)
+
+    scene = new Scene()
+
+    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100)
+
+    camera.position.z = 1
+
+    controls = new OrbitControls(camera, renderer.domElement)
+    controls.autoRotate = true
+    controls.autoRotateSpeed = -2
+    controls.maxDistance = 1
+    controls.minDistance = 1
+    controls.enablePan = false
+    controls.enableDamping = true
+
+    rgbeLoader
+            .setPath(`../img/`)
+            .load('brown_photostudio_06_1k.hdr', t => {
+              environment = new PMREMGenerator(renderer).fromCubemap(t).texture
+              // new Color('#000')
+              scene.background = scene.environment = environment
+              const geo = loader.parse(geometryJson)
+
+              const mesh = new Mesh(geo)
+              mesh.scale.setScalar(.3)
+              scene.add(mesh)
+              SetDiamondMaterial(scene, camera, mesh, texture)
+
+
+              //++++++++++++++++++++++++postprocessing
+              composer = new EffectComposer(
+                      renderer, {
+                        frameBufferType: HalfFloatType
+                      }
+              );
+
+
+              const Bloom = new BloomEffect({
+                luminanceThreshold: .9,
+                intensity: 5,
+                mipmapBlur: true,
+                radius: .2,
+                resolutionScale: 1
+              });
+
+              const renderPass = new RenderPass(scene, camera);
+              const effectPass = new EffectPass(
+                      camera,
+                      Bloom
+              );
+
+              effectPass.renderToScreen = true;
+
+              composer.addPass(renderPass);
+              composer.addPass(effectPass);
+
+
+              animate()
+
+            })
+
+    window.addEventListener('resize', onWindowResized)
+  }
+
+  function onWindowResized () {
+    renderer.setSize(window.innerWidth, window.innerHeight)
+
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+  }
+
+  function animate () {
+
+    controls.update()
+
+    requestAnimationFrame(animate)
+    composer.render();
+  }
+
+</script>
+</body>
+</html>
